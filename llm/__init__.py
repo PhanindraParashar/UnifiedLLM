@@ -1,5 +1,4 @@
 import os
-from groq import Groq
 from openai import OpenAI
 import anthropic
 from typing import List, Dict, Any, Tuple, Union
@@ -94,3 +93,40 @@ class AsyncLLM:
             
         tasks = [limited_chat_complete(prompt,system_message) for prompt,system_message in zip(prompts,system_messages)]
         return await asyncio.gather(*tasks)
+
+class ProcessOutput:
+    def __init__(self):
+        pass
+    
+    @staticmethod
+    def jsonify_llm(llm_output: str, tag_name:str) -> Dict:
+        m = llm_output.replace(f'<{tag_name}>', '').replace(f'</{tag_name}>', '')
+        try:
+            return json.loads(m)
+        except:
+            try:
+                return json.loads(repair_json(m))
+            except:
+                print("Error in jsonify_llm")
+                return {}
+    
+    @staticmethod
+    def jsonify_llm_new(llm_output:str) -> Dict:
+        try:
+            return json.loads(llm_output)
+        except:
+            try:
+                return json.loads(repair_json(llm_output))
+            except:
+                print("Error in jsonify_llm")
+                return {}
+    
+    @staticmethod
+    def extract_within_tags(text: str, tag_name: str):
+        soup = BeautifulSoup(text, 'html.parser')
+        reason = soup.find_all(tag_name)
+        if len(reason) > 0:
+            reason = reason[0].text.replace(f'<{tag_name}>', '').replace(f'</{tag_name}>', '')
+        else:
+            reason = None
+        return reason
